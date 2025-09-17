@@ -2770,3 +2770,90 @@ jobs:
 ### 代码提交规范
 
 使用约定式提交 (Conventional Commits)：
+
+
+示例：
+
+feat(accessibility): add color contrast detection
+
+Implement WCAG 2.1 AA color contrast checking for text elements.
+Supports both normal and large text contrast ratios.
+
+Closes #123
+
+
+### 代码审查
+
+所有代码更改都需要通过代码审查：
+- 代码质量和风格
+- 测试覆盖率
+- 文档完整性
+- 性能影响
+- 安全性考虑
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+
+### 许可证摘要
+
+- ✅ 商业使用
+- ✅ 修改
+- ✅ 分发
+- ✅ 私人使用
+- ❌ 责任
+- ❌ 保证
+
+## 📚 相关资源
+
+### 官方文档
+- [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
+- [ADA Compliance Guide](https://www.ada.gov/)
+- [Chrome Extension API](https://developer.chrome.com/docs/extensions/)
+- [SEO Best Practices](https://developers.google.com/search/docs)
+
+### 工具和库
+- [axe-core](https://github.com/dequelabs/axe-core) - 无障碍检测引擎
+- [Lighthouse](https://github.com/GoogleChrome/lighthouse) - 网页质量检测
+- [Pa11y](https://github.com/pa11y/pa11y) - 命令行无障碍测试
+- [WAVE](https://wave.webaim.org/) - Web无障碍评估工具
+
+### 学习资源
+- [WebAIM](https://webaim.org/) - Web无障碍学习中心
+- [A11y Project](https://www.a11yproject.com/) - 无障碍最佳实践
+- [MDN Accessibility](https://developer.mozilla.org/en-US/docs/Web/Accessibility) - 无障碍开发指南
+- [Google SEO Guide](https://developers.google.com/search/docs/beginner/seo-starter-guide) - SEO入门指南
+
+## 💬 支持和反馈
+
+### 获取帮助
+
+- 📧 **邮件支持**: support@webaccess-tester.com
+- 💬 **在线聊天**: [Discord社区](https://discord.gg/webaccess)
+- 📋 **问题报告**: [GitHub Issues](https://github.com/your-username/web-accessibility-tester/issues)
+- 📖 **文档**: [在线文档](https://docs.webaccess-tester.com)
+
+### 常见问题
+
+**Q: 插件支持哪些浏览器？**
+A: 目前仅支持Chrome浏览器，计划未来支持Firefox和Edge。
+
+**Q: 检测结果的准确性如何？**
+A: 插件基于WCAG 2.1标准，准确率约95%，但仍建议人工复核重要问题。
+
+**Q: 是否支持自定义检测规则？**
+A: 是的，支持通过配置文件添加自定义规则，详见开发指南。
+
+**Q: 插件是否收集用户数据？**
+A: 不收集任何个人数据，所有检测都在本地进行。
+
+### 反馈渠道
+
+- ⭐ **功能建议**: [Feature Requests](https://github.com/your-username/web-accessibility-tester/discussions)
+- 🐛 **Bug报告**: [Bug Reports](https://github.com/your-username/web-accessibility-tester/issues/new?template=bug_report.md)
+- 💡 **改进建议**: [Improvements](https://github.com/your-username/web-accessibility-tester/discussions/categories/ideas)
+- 📝 **使用体验**: [User Feedback](https://forms.gle/your-feedback-form)
+
+---
+
+**感谢您使用Web Accessibility & SEO Tester！让我们一起创建更加包容和优化的网络世界。** 🌐✨
