@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "Web Accessibility & SEO Tester",
+  "name": "Web Accessibility Tester",
   "version": "1.0.0",
-  "description": "检测网页SEO和无障碍合规问题的Chrome插件",
+  "description": "检测网页无障碍合规问题的Chrome插件",
   "permissions": [
     "activeTab",
     "storage",
-    "scripting"
+    "scripting",
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -19,7 +20,6 @@
       "matches": ["<all_urls>"],
       "js": [
         "lib/utils.js",
-        "lib/seo-checker.js",
         "lib/accessibility-checker.js",
         "lib/display-manager.js",
         "lib/visual-annotator.js",
@@ -32,12 +32,7 @@
   ],
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "Web Accessibility & SEO Tester",
-    "default_icon": {
-      "16": "assets/icons/icon16.png",
-      "48": "assets/icons/icon48.png",
-      "128": "assets/icons/icon128.png"
-    }
+    "default_title": "Web Accessibility Tester"
   },
   "options_page": "options/options.html",
   "web_accessible_resources": [

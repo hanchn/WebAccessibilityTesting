@@ -40,13 +40,6 @@ class ContentScript {
     async handleMessage(request, sender, sendResponse) {
         try {
             switch (request.action) {
-                case 'startSEOScan':
-                    const seoResults = await this.detector.runSEOCheck();
-                    await this.storeResults('seoResults', seoResults);
-                    this.displayManager.displayResults(seoResults);
-                    sendResponse(seoResults);
-                    break;
-                    
                 case 'startAccessibilityScan':
                     const accessibilityResults = await this.detector.runAccessibilityCheck();
                     await this.storeResults('accessibilityResults', accessibilityResults);
@@ -85,34 +78,21 @@ class ContentScript {
     }
 
     async onPageReady() {
-        console.log('Web Accessibility Tester: 页面已准备就绪');
-        
-        // 根据设置决定是否自动检测
+        // 如果启用了自动扫描，进行无障碍检测
         if (this.settings.autoScan) {
-            setTimeout(() => {
-                this.runAutoScan();
-            }, this.settings.scanDelay || 2000);
+            await this.runAutoScan();
         }
     }
 
     async runAutoScan() {
         try {
-            // 自动运行SEO和无障碍检测
-            const [seoResults, accessibilityResults] = await Promise.all([
-                this.detector.runSEOCheck(),
-                this.detector.runAccessibilityCheck()
-            ]);
-
-            // 存储结果
-            await Promise.all([
-                this.storeResults('seoResults', seoResults),
-                this.storeResults('accessibilityResults', accessibilityResults)
-            ]);
-
-            // 显示结果
-            this.displayManager.displayResults(seoResults);
-            this.displayManager.displayResults(accessibilityResults);
-
+            const results = await this.detector.runAccessibilityCheck();
+            await this.storeResults('accessibilityResults', results);
+            
+            // 如果有问题，显示结果
+            if (results.issues.length > 0) {
+                this.displayManager.displayResults(results);
+            }
         } catch (error) {
             console.error('自动扫描失败:', error);
         }
@@ -131,10 +111,7 @@ class ContentScript {
 
     async saveSettings() {
         try {
-            const result = await chrome.storage.sync.get('settings');
-            const currentSettings = result.settings || {};
-            const newSettings = { ...currentSettings, ...this.settings };
-            await chrome.storage.sync.set({ settings: newSettings });
+            await chrome.storage.sync.set({ settings: this.settings });
         } catch (error) {
             console.error('保存设置失败:', error);
         }

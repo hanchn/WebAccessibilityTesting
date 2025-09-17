@@ -3,84 +3,51 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Web Accessibility & SEO Tester</title>
+    <title>Web Accessibility Tester</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <div class="container">
-      <header class="header">
-        <h1>网页检测工具</h1>
-        <button id="settingsBtn" class="settings-btn" title="设置">⚙️</button>
+    <div class="popup-container">
+      <header class="popup-header">
+        <h1>无障碍检测</h1>
+        <div class="header-actions">
+          <button id="settingsBtn" class="icon-btn" title="设置">⚙️</button>
+          <button id="refreshBtn" class="icon-btn" title="刷新">🔄</button>
+        </div>
       </header>
 
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="seo">SEO检测</button>
-        <button class="tab-btn" data-tab="accessibility">无障碍检测</button>
-        <button class="tab-btn" data-tab="summary">总览</button>
-      </div>
-
-      <div class="content">
-        <div id="loading" class="loading hidden">
-          <div class="spinner"></div>
-          <p>正在检测中...</p>
+      <main class="popup-main">
+        <div class="scan-section">
+          <button id="accessibilityScanBtn" class="scan-btn primary">
+            开始无障碍检测
+          </button>
         </div>
 
-        <div id="seo-panel" class="panel active">
-          <div class="scan-section">
-            <button id="seoScanBtn" class="scan-btn">开始SEO检测</button>
-          </div>
-          <div id="seo-results" class="results"></div>
-        </div>
-
-        <div id="accessibility-panel" class="panel">
-          <div class="scan-section">
-            <button id="accessibilityScanBtn" class="scan-btn">
-              开始无障碍检测
-            </button>
-          </div>
-          <div id="accessibility-results" class="results"></div>
-        </div>
-
-        <div id="summary-panel" class="panel">
-          <div class="summary-stats">
-            <div class="stat-item">
-              <span class="stat-label">SEO得分</span>
-              <span id="seo-score" class="stat-value">--</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">无障碍得分</span>
-              <span id="accessibility-score" class="stat-value">--</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">总体评级</span>
-              <span id="overall-grade" class="stat-value grade">--</span>
-            </div>
-          </div>
-          <div id="summary-issues" class="issues-summary"></div>
-        </div>
-      </div>
-
-      <footer class="footer">
         <div class="display-mode-section">
-          <label for="displayModeSelect" class="mode-label">显示模式:</label>
-          <select id="displayModeSelect" class="mode-select">
+          <label>显示模式：</label>
+          <select id="displayModeSelect">
             <option value="popup">弹窗显示</option>
             <option value="console">控制台输出</option>
             <option value="visual">页面标注</option>
           </select>
         </div>
-        <div class="action-buttons">
-          <button
-            id="clearAnnotationsBtn"
-            class="clear-btn"
-            style="display: none"
-          >
-            清除标注
-          </button>
-          <button id="exportBtn" class="export-btn">导出报告</button>
-          <button id="refreshBtn" class="refresh-btn">重新检测</button>
+
+        <div class="results-section">
+          <div id="accessibility-results" class="results-container">
+            <div class="no-results">点击上方按钮开始检测</div>
+          </div>
         </div>
+      </main>
+
+      <footer class="popup-footer">
+        <button id="exportBtn" class="btn secondary">导出报告</button>
+        <button id="clearBtn" class="btn secondary">清除标注</button>
       </footer>
+    </div>
+
+    <div id="loading" class="loading hidden">
+      <div class="spinner"></div>
+      <span>检测中...</span>
     </div>
 
     <script src="popup.js"></script>
