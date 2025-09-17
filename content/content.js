@@ -1,16 +1,35 @@
 class ContentScript {
     constructor() {
-        this.detector = new AccessibilityDetector();
-        this.annotator = new PageAnnotator();
+        console.log('🚀 ContentScript 构造函数开始执行');
+        console.log('🔧 当前页面URL:', window.location.href);
+        console.log('🔧 当前时间:', new Date().toISOString());
+        
+        try {
+            this.detector = new AccessibilityDetector();
+            console.log('✅ AccessibilityDetector 创建成功');
+        } catch (error) {
+            console.error('❌ AccessibilityDetector 创建失败:', error);
+        }
+        
+        try {
+            this.annotator = new PageAnnotator();
+            console.log('✅ PageAnnotator 创建成功');
+        } catch (error) {
+            console.error('❌ PageAnnotator 创建失败:', error);
+        }
+        
         this.lastResults = null;
         this.init();
     }
 
     init() {
-        console.log('Web Accessibility Tester - Content Script 已加载');
+        console.log('🎯 Web Accessibility Tester - Content Script 已加载');
+        console.log('🔧 Chrome runtime 可用:', !!chrome.runtime);
+        console.log('🔧 Chrome runtime onMessage 可用:', !!chrome.runtime.onMessage);
         
         // 监听来自popup的消息
         chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+            console.log('📨 收到消息:', message);
             this.handleMessage(message, sender, sendResponse);
             return true; // 保持消息通道开放
         });
@@ -20,6 +39,8 @@ class ContentScript {
         
         // 全局引用，供标注器使用
         window.pageAnnotator = this.annotator;
+        
+        console.log('✅ Content Script 初始化完成');
     }
 
     async handleMessage(message, sender, sendResponse) {

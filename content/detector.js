@@ -4,17 +4,41 @@ class AccessibilityDetector {
     }
 
     async runCheck() {
-        console.log('开始无障碍检测...');
+        console.log('🔧 开始无障碍检测... - 版本2024.1.27');
         this.issues = [];
         
-        // 执行各项检测
-        this.checkMissingAlt();
-        this.checkMissingLabels();
-        this.checkHeadingStructure();
-        this.checkContrast();
-        this.checkKeyboardFocus();
+        // 添加一个测试问题，确保显示功能正常
+        this.issues.push({
+            id: 'test-issue',
+            element: document.body,
+            message: '🧪 测试问题 - 检测功能正常运行',
+            suggestion: '这是一个测试问题，用于验证检测和显示功能是否正常工作',
+            severity: 'warning',
+            category: 'test'
+        });
         
-        console.log(`检测完成，发现 ${this.issues.length} 个问题`);
+        // 执行各项检测
+        console.log('📸 检查图片alt属性...');
+        this.checkMissingAlt();
+        console.log(`发现 ${this.issues.length} 个图片问题`);
+        
+        console.log('📝 检查表单标签...');
+        this.checkMissingLabels();
+        console.log(`发现 ${this.issues.length} 个表单问题`);
+        
+        console.log('📋 检查标题结构...');
+        this.checkHeadingStructure();
+        console.log(`发现 ${this.issues.length} 个标题问题`);
+        
+        console.log('🎨 检查颜色对比度...');
+        this.checkContrast();
+        console.log(`发现 ${this.issues.length} 个对比度问题`);
+        
+        console.log('⌨️ 检查键盘焦点...');
+        this.checkKeyboardFocus();
+        console.log(`最终发现 ${this.issues.length} 个问题`);
+        
+        console.log('检测完成，发现问题:', this.issues);
         
         return {
             total: this.issues.length,
@@ -25,8 +49,18 @@ class AccessibilityDetector {
 
     checkMissingAlt() {
         const images = document.querySelectorAll('img');
+        console.log(`🔍 找到 ${images.length} 个图片元素`);
+        
         images.forEach((img, index) => {
+            console.log(`检查图片 ${index}:`, {
+                src: img.src,
+                alt: img.alt,
+                hasAlt: !!img.alt,
+                altTrimmed: img.alt ? img.alt.trim() : ''
+            });
+            
             if (!img.alt || img.alt.trim() === '') {
+                console.log(`❌ 图片 ${index} 缺少alt属性`);
                 this.issues.push({
                     id: `alt-${index}`,
                     element: img,
@@ -35,22 +69,41 @@ class AccessibilityDetector {
                     severity: 'error',
                     category: 'images'
                 });
+            } else {
+                console.log(`✅ 图片 ${index} 有alt属性: "${img.alt}"`);
             }
         });
+        
+        console.log(`图片检测完成，发现 ${this.issues.length} 个问题`);
     }
 
     checkMissingLabels() {
         const inputs = document.querySelectorAll('input, textarea, select');
+        console.log(`🔍 找到 ${inputs.length} 个表单元素`);
+        
         inputs.forEach((input, index) => {
             // 跳过隐藏元素
-            if (input.type === 'hidden') return;
+            if (input.type === 'hidden') {
+                console.log(`⏭️ 跳过隐藏元素 ${index}`);
+                return;
+            }
             
             const hasLabel = input.labels && input.labels.length > 0;
             const hasAriaLabel = input.getAttribute('aria-label');
             const hasAriaLabelledby = input.getAttribute('aria-labelledby');
             const hasPlaceholder = input.placeholder;
             
+            console.log(`检查表单元素 ${index}:`, {
+                type: input.type,
+                tagName: input.tagName,
+                hasLabel,
+                hasAriaLabel: !!hasAriaLabel,
+                hasAriaLabelledby: !!hasAriaLabelledby,
+                hasPlaceholder: !!hasPlaceholder
+            });
+            
             if (!hasLabel && !hasAriaLabel && !hasAriaLabelledby && !hasPlaceholder) {
+                console.log(`❌ 表单元素 ${index} 缺少标签`);
                 this.issues.push({
                     id: `label-${index}`,
                     element: input,
@@ -59,8 +112,12 @@ class AccessibilityDetector {
                     severity: 'error',
                     category: 'forms'
                 });
+            } else {
+                console.log(`✅ 表单元素 ${index} 有标签`);
             }
         });
+        
+        console.log(`表单检测完成，当前总问题数: ${this.issues.length}`);
     }
 
     checkHeadingStructure() {
