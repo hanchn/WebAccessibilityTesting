@@ -4,7 +4,7 @@ class ContentScript {
         this.detector = new WebDetector();
         this.displayManager = new DisplayManager();
         this.settings = {
-            displayMode: 'popup' // 'console', 'visual', 'popup'
+            annotationEnabled: true
         };
         this.init();
     }
@@ -13,16 +13,13 @@ class ContentScript {
         // 加载用户设置
         await this.loadSettings();
         
-        // 设置显示模式
-        this.displayManager.setMode(this.settings.displayMode);
-        
         // 监听来自popup的消息
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             this.handleMessage(request, sender, sendResponse);
-            return true; // 保持消息通道开放
+            return true;
         });
 
-        // 页面加载完成后自动进行基础检测
+        // 页面加载完成后的处理
         if (document.readyState === 'complete') {
             this.onPageReady();
         } else {
@@ -42,24 +39,13 @@ class ContentScript {
             switch (request.action) {
                 case 'startAccessibilityScan':
                     const accessibilityResults = await this.detector.runAccessibilityCheck();
-                    await this.storeResults('accessibilityResults', accessibilityResults);
                     this.displayManager.displayResults(accessibilityResults);
                     sendResponse(accessibilityResults);
                     break;
                     
                 case 'toggleAnnotation':
+                    this.settings.annotationEnabled = request.enabled;
                     this.displayManager.visualAnnotator.setEnabled(request.enabled);
-                    sendResponse({ success: true });
-                    break;
-                    
-                case 'locateElement':
-                    this.locateElementById(request.issueId);
-                    sendResponse({ success: true });
-                    break;
-                    
-                case 'setDisplayMode':
-                    this.settings.displayMode = request.mode;
-                    this.displayManager.setMode(request.mode);
                     await this.saveSettings();
                     sendResponse({ success: true });
                     break;
@@ -73,51 +59,21 @@ class ContentScript {
                     sendResponse({
                         url: window.location.href,
                         title: document.title,
-                        readyState: document.readyState,
-                        displayMode: this.settings.displayMode
+                        readyState: document.readyState
                     });
                     break;
                     
                 default:
-                    sendResponse({ error: '未知的操作类型' });
+                    sendResponse({ error: 'Unknown action: ' + request.action });
             }
         } catch (error) {
-            console.error('处理消息时出错:', error);
+            console.error('处理消息失败:', error);
             sendResponse({ error: error.message });
         }
     }
 
-    locateElementById(issueId) {
-        const annotation = this.displayManager.visualAnnotator.annotations.get(issueId);
-        if (annotation && annotation.element) {
-            this.displayManager.visualAnnotator.highlightElement(annotation.element);
-            // 显示对应的提示框
-            if (annotation.tooltip) {
-                annotation.tooltip.style.display = 'block';
-                annotation.tooltip.classList.add('expanded');
-            }
-        }
-    }
-
     async onPageReady() {
-        // 如果启用了自动扫描，进行无障碍检测
-        if (this.settings.autoScan) {
-            await this.runAutoScan();
-        }
-    }
-
-    async runAutoScan() {
-        try {
-            const results = await this.detector.runAccessibilityCheck();
-            await this.storeResults('accessibilityResults', results);
-            
-            // 如果有问题，显示结果
-            if (results.issues.length > 0) {
-                this.displayManager.displayResults(results);
-            }
-        } catch (error) {
-            console.error('自动扫描失败:', error);
-        }
+        console.log('页面加载完成，无障碍检测器已就绪');
     }
 
     async loadSettings() {
@@ -141,17 +97,8 @@ class ContentScript {
 
     onSettingsChanged(newSettings) {
         this.settings = { ...this.settings, ...newSettings };
-        this.displayManager.setMode(this.settings.displayMode);
-    }
-
-    async storeResults(key, results) {
-        try {
-            await chrome.storage.local.set({ [key]: results });
-        } catch (error) {
-            console.error('存储结果失败:', error);
-        }
+        this.displayManager.visualAnnotator.setEnabled(this.settings.annotationEnabled);
     }
 }
 
-// 初始化内容脚本
 new ContentScript();

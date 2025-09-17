@@ -79,42 +79,56 @@ class WebDetector {
             
             const startTime = Date.now();
             const issues = [];
-            const checkedElements = new Set(); // 添加已检查元素集合
             const issueMap = new Map(); // 用于去重的问题映射
             
-            // 收集所有检测结果
-            const allChecks = [
-                () => this.accessibilityChecker.checkImages(),
-                () => this.accessibilityChecker.checkHeadings(),
-                () => this.accessibilityChecker.checkLinks(),
-                () => this.accessibilityChecker.checkForms(),
-                () => this.accessibilityChecker.checkColors(),
-                () => this.accessibilityChecker.checkKeyboard(),
-                () => this.accessibilityChecker.checkARIA(),
-                () => this.accessibilityChecker.checkTables()
-            ];
-            
-            allChecks.forEach(checkFn => {
-                const checkResults = checkFn();
-                checkResults.forEach(issue => {
-                    // 为每个问题生成唯一标识符
-                    const elementKey = issue.element ? 
-                        `${issue.element.tagName}-${issue.element.className}-${issue.element.id || 'no-id'}` : 
-                        issue.selector || 'no-element';
-                    const issueKey = `${elementKey}-${issue.title}-${issue.category}`;
-                    
-                    // 去重：如果同一个元素的同一类问题已存在，则跳过
-                    if (!issueMap.has(issueKey)) {
-                        issueMap.set(issueKey, issue);
-                        issues.push({
-                            ...issue,
-                            id: issueKey, // 添加唯一ID
-                            timestamp: Date.now()
+            try {
+                // 收集所有检测结果
+                const allChecks = [
+                    () => this.accessibilityChecker.checkImages(),
+                    () => this.accessibilityChecker.checkHeadings(),
+                    () => this.accessibilityChecker.checkLinks(),
+                    () => this.accessibilityChecker.checkForms(),
+                    () => this.accessibilityChecker.checkColors(),
+                    () => this.accessibilityChecker.checkKeyboard(),
+                    () => this.accessibilityChecker.checkARIA(),
+                    () => this.accessibilityChecker.checkTables()
+                ];
+                
+                allChecks.forEach(checkFn => {
+                    try {
+                        const checkResults = checkFn();
+                        checkResults.forEach(issue => {
+                            // 为每个问题生成唯一标识符
+                            const elementKey = issue.element ? 
+                                `${issue.element.tagName}-${issue.element.className}-${issue.element.id || 'no-id'}` : 
+                                issue.selector || 'no-element';
+                            const issueKey = `${elementKey}-${issue.title}-${issue.category}`;
+                            
+                            // 去重：如果同一个元素的同一类问题已存在，则跳过
+                            if (!issueMap.has(issueKey)) {
+                                issueMap.set(issueKey, issue);
+                                issues.push({
+                                    ...issue,
+                                    id: issueKey,
+                                    timestamp: Date.now()
+                                });
+                            }
                         });
+                    } catch (error) {
+                        console.error('检测项目失败:', error);
                     }
                 });
-            });
-            
+                
+            } catch (error) {
+                console.error('无障碍检测失败:', error);
+                issues.push({
+                    title: '检测错误',
+                    description: '检测过程中发生错误: ' + error.message,
+                    severity: 'error',
+                    category: 'system'
+                });
+            }
+    
             return {
                 type: 'accessibility',
                 url: window.location.href,

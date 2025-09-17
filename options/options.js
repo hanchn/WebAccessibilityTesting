@@ -1,21 +1,15 @@
 class OptionsController {
     constructor() {
         this.defaultSettings = {
-            displayMode: 'popup',
-            autoScan: false,
-            enableSEO: true,
-            enableAccessibility: true,
-            severityLevel: 'medium',
-            includeScreenshots: false,
-            reportFormat: 'html'
+            annotationEnabled: true,
+            autoScan: false
         };
-        
         this.init();
     }
 
-    init() {
+    async init() {
+        await this.loadSettings();
         this.bindEvents();
-        this.loadSettings();
     }
 
     bindEvents() {
@@ -33,60 +27,50 @@ class OptionsController {
             const result = await chrome.storage.sync.get('settings');
             const settings = result.settings || this.defaultSettings;
             
-            // 更新UI
-            document.getElementById('displayMode').value = settings.displayMode;
+            document.getElementById('annotationEnabled').checked = settings.annotationEnabled;
             document.getElementById('autoScan').checked = settings.autoScan;
-            document.getElementById('enableSEO').checked = settings.enableSEO;
-            document.getElementById('enableAccessibility').checked = settings.enableAccessibility;
-            document.getElementById('severityLevel').value = settings.severityLevel;
-            document.getElementById('includeScreenshots').checked = settings.includeScreenshots;
-            document.getElementById('reportFormat').value = settings.reportFormat;
         } catch (error) {
             console.error('加载设置失败:', error);
-            this.showStatus('加载设置失败', 'error');
         }
     }
 
     async saveSettings() {
         try {
             const settings = {
-                displayMode: document.getElementById('displayMode').value,
-                autoScan: document.getElementById('autoScan').checked,
-                enableSEO: document.getElementById('enableSEO').checked,
-                enableAccessibility: document.getElementById('enableAccessibility').checked,
-                severityLevel: document.getElementById('severityLevel').value,
-                includeScreenshots: document.getElementById('includeScreenshots').checked,
-                reportFormat: document.getElementById('reportFormat').value
+                annotationEnabled: document.getElementById('annotationEnabled').checked,
+                autoScan: document.getElementById('autoScan').checked
             };
-
+            
             await chrome.storage.sync.set({ settings });
-            this.showStatus('设置已保存', 'success');
+            
+            // 显示保存成功提示
+            const saveBtn = document.getElementById('saveBtn');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = '已保存';
+            saveBtn.disabled = true;
+            
+            setTimeout(() => {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+            }, 2000);
+            
         } catch (error) {
             console.error('保存设置失败:', error);
-            this.showStatus('保存设置失败', 'error');
+            alert('保存设置失败，请重试');
         }
     }
 
     async resetSettings() {
-        try {
-            await chrome.storage.sync.set({ settings: this.defaultSettings });
-            await this.loadSettings();
-            this.showStatus('已重置为默认设置', 'success');
-        } catch (error) {
-            console.error('重置设置失败:', error);
-            this.showStatus('重置设置失败', 'error');
+        if (confirm('确定要重置为默认设置吗？')) {
+            try {
+                await chrome.storage.sync.set({ settings: this.defaultSettings });
+                await this.loadSettings();
+                alert('设置已重置为默认值');
+            } catch (error) {
+                console.error('重置设置失败:', error);
+                alert('重置设置失败，请重试');
+            }
         }
-    }
-
-    showStatus(message, type) {
-        const statusEl = document.getElementById('status');
-        statusEl.textContent = message;
-        statusEl.className = `status-message ${type}`;
-        
-        setTimeout(() => {
-            statusEl.textContent = '';
-            statusEl.className = 'status-message';
-        }, 3000);
     }
 }
 

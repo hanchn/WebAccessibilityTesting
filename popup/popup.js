@@ -1,13 +1,12 @@
 class PopupController {
     constructor() {
         this.accessibilityResults = null;
-        this.displayMode = 'popup';
+        this.annotationEnabled = true;
         this.init();
     }
 
     init() {
         this.bindEvents();
-        this.loadStoredResults();
         this.loadSettings();
     }
 
@@ -22,11 +21,6 @@ class PopupController {
             this.toggleAnnotation(e.target.checked);
         });
     
-        // 显示模式选择
-        document.getElementById('displayModeSelect').addEventListener('change', (e) => {
-            this.setDisplayMode(e.target.value);
-        });
-    
         // 过滤按钮
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -34,39 +28,60 @@ class PopupController {
             });
         });
     
-        // 定位问题按钮
-        document.getElementById('locateBtn').addEventListener('click', () => {
-            this.locateIssues();
-        });
-    
         // 其他按钮事件
-        document.getElementById('exportBtn').addEventListener('click', () => this.exportReport());
-        document.getElementById('clearBtn').addEventListener('click', () => this.clearAnnotations());
-        document.getElementById('refreshBtn').addEventListener('click', () => this.refreshAll());
-        document.getElementById('settingsBtn').addEventListener('click', () => {
+        document.getElementById('exportBtn')?.addEventListener('click', () => this.exportReport());
+        document.getElementById('clearBtn')?.addEventListener('click', () => this.clearAnnotations());
+        document.getElementById('refreshBtn')?.addEventListener('click', () => this.refreshAll());
+        document.getElementById('settingsBtn')?.addEventListener('click', () => {
             chrome.runtime.openOptionsPage();
         });
     }
 
+    async startAccessibilityScan() {
+        this.showLoading(true);
+        
+        try {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            
+            const response = await chrome.tabs.sendMessage(tab.id, {
+                action: 'startAccessibilityScan'
+            });
+            
+            if (response && response.issues) {
+                this.accessibilityResults = response;
+                this.displayAccessibilityResults(response);
+                this.updateStats(response);
+            } else {
+                this.showError('检测失败，请刷新页面后重试');
+            }
+        } catch (error) {
+            console.error('无障碍扫描失败:', error);
+            this.showError('检测失败，请确保页面已完全加载');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
     async toggleAnnotation(enabled) {
+        this.annotationEnabled = enabled;
         try {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             await chrome.tabs.sendMessage(tab.id, {
                 action: 'toggleAnnotation',
                 enabled: enabled
             });
+            
+            await this.saveAnnotationSetting(enabled);
         } catch (error) {
             console.error('切换标注失败:', error);
         }
     }
 
     filterResults(filter) {
-        // 更新过滤按钮状态
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.filter === filter);
         });
         
-        // 过滤结果显示
         const items = document.querySelectorAll('.result-item');
         items.forEach(item => {
             if (filter === 'all' || item.classList.contains(filter)) {
@@ -77,110 +92,83 @@ class PopupController {
         });
     }
 
-    async locateIssues() {
-        if (!this.accessibilityResults || this.accessibilityResults.issues.length === 0) {
-            alert('请先进行检测');
-            return;
-        }
-        
-        try {
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            await chrome.tabs.sendMessage(tab.id, {
-                action: 'setDisplayMode',
-                mode: 'visual'
-            });
-            
-            // 切换到页面标注模式
-            document.getElementById('displayModeSelect').value = 'visual';
-            document.getElementById('annotationToggle').checked = true;
-            
-            alert('已切换到页面标注模式，请查看页面上的红色标注');
-        } catch (error) {
-            console.error('定位问题失败:', error);
-        }
-    }
-
     displayAccessibilityResults(results) {
         const container = document.getElementById('accessibility-results');
-        const countElement = document.getElementById('resultsCount');
+        if (!container) return;
     
         container.innerHTML = '';
     
-        if (results.issues.length === 0) {
+        if (!results.issues || results.issues.length === 0) {
             container.innerHTML = '<div class="no-issues">✅ 未发现无障碍问题</div>';
-            countElement.textContent = '未发现问题';
             return;
         }
     
-        // 更新计数显示
-        const errorCount = results.issues.filter(issue => issue.severity === 'error').length;
-        const warningCount = results.issues.filter(issue => issue.severity === 'warning').length;
-        countElement.innerHTML = `共发现 <span class="count-total">${results.issues.length}</span> 个问题 
-            (<span class="count-error">${errorCount}</span> 错误, <span class="count-warning">${warningCount}</span> 警告)`;
-    
         results.issues.forEach(issue => {
-            const item = this.createEnhancedResultItem(issue);
+            const item = this.createResultItem(issue);
             container.appendChild(item);
         });
     }
 
-    createEnhancedResultItem(issue) {
+    createResultItem(issue) {
         const item = document.createElement('div');
         item.className = `result-item ${issue.severity}`;
     
         item.innerHTML = `
-            <div class="issue-header">
-                <span class="severity-badge ${issue.severity}">${issue.severity.toUpperCase()}</span>
-                <div class="issue-title">${issue.title}</div>
+            <div class="result-header">
+                <h4 class="result-title">${issue.title}</h4>
+                <span class="severity-badge ${issue.severity}">${this.getSeverityText(issue.severity)}</span>
             </div>
-            <div class="issue-description">${issue.description}</div>
-            <div class="issue-meta">
-                <span class="issue-category">${issue.category}</span>
-                ${issue.element ? '<span class="has-element">🎯 可定位</span>' : ''}
-            </div>
-            ${issue.suggestion ? `<div class="issue-suggestion">💡 ${issue.suggestion}</div>` : ''}
-            <div class="issue-actions">
-                <button class="locate-btn" ${!issue.element ? 'disabled' : ''}>定位元素</button>
-            </div>
+            <p class="result-description">${issue.description}</p>
+            ${issue.suggestion ? `<div class="result-suggestion">💡 ${issue.suggestion}</div>` : ''}
+            ${issue.element ? `<div class="result-element">📍 ${issue.selector || issue.element.tagName}</div>` : ''}
         `;
     
-        // 绑定定位按钮事件
-        const locateBtn = item.querySelector('.locate-btn');
-        if (issue.element && locateBtn) {
-            locateBtn.addEventListener('click', async () => {
-                try {
-                    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-                    await chrome.tabs.sendMessage(tab.id, {
-                        action: 'locateElement',
-                        issueId: issue.id
-                    });
-                } catch (error) {
-                    console.error('定位元素失败:', error);
-                }
-            });
-        }
-        
         return item;
     }
 
+    getSeverityText(severity) {
+        const map = {
+            'error': '错误',
+            'warning': '警告',
+            'info': '信息'
+        };
+        return map[severity] || severity;
+    }
+
+    updateStats(results) {
+        const errorCount = results.issues.filter(issue => issue.severity === 'error').length;
+        const warningCount = results.issues.filter(issue => issue.severity === 'warning').length;
+        const totalCount = results.issues.length;
+
+        document.getElementById('errorCount').textContent = errorCount;
+        document.getElementById('warningCount').textContent = warningCount;
+        document.getElementById('totalCount').textContent = totalCount;
+
+        // 显示统计区域
+        document.getElementById('statsSection').style.display = 'block';
+        document.getElementById('filterSection').style.display = 'block';
+    }
+
     showLoading(show) {
-        document.getElementById('loading').classList.toggle('hidden', !show);
+        const btn = document.getElementById('accessibilityScanBtn');
+        if (show) {
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner"></div> 检测中...';
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = `
+                <svg class="scan-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+                开始无障碍检测
+            `;
+        }
     }
 
     showError(message) {
-        // 简单的错误显示
-        alert(message);
-    }
-
-    async loadStoredResults() {
-        try {
-            const result = await chrome.storage.local.get(['accessibilityResults']);
-            if (result.accessibilityResults) {
-                this.accessibilityResults = result.accessibilityResults;
-                this.displayAccessibilityResults(result.accessibilityResults);
-            }
-        } catch (error) {
-            console.error('加载存储结果失败:', error);
+        const container = document.getElementById('accessibility-results');
+        if (container) {
+            container.innerHTML = `<div class="error-message">❌ ${message}</div>`;
         }
     }
 
@@ -191,9 +179,8 @@ class PopupController {
         }
 
         const report = {
-            title: '无障碍检测报告',
-            url: this.accessibilityResults.url,
-            timestamp: this.accessibilityResults.timestamp,
+            url: window.location.href,
+            timestamp: new Date().toISOString(),
             summary: this.accessibilityResults.summary,
             issues: this.accessibilityResults.issues
         };
@@ -202,26 +189,9 @@ class PopupController {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `accessibility-report-${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `accessibility-report-${Date.now()}.json`;
         a.click();
         URL.revokeObjectURL(url);
-    }
-
-    async setDisplayMode(mode) {
-        this.displayMode = mode;
-        document.getElementById('displayModeSelect').value = mode;
-        
-        try {
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            await chrome.tabs.sendMessage(tab.id, {
-                action: 'setDisplayMode',
-                mode: mode
-            });
-            
-            await this.saveDisplayMode(mode);
-        } catch (error) {
-            console.error('设置显示模式失败:', error);
-        }
     }
 
     async clearAnnotations() {
@@ -238,29 +208,39 @@ class PopupController {
     async loadSettings() {
         try {
             const result = await chrome.storage.sync.get('settings');
-            if (result.settings && result.settings.displayMode) {
-                this.displayMode = result.settings.displayMode;
-                document.getElementById('displayModeSelect').value = this.displayMode;
+            if (result.settings) {
+                if (typeof result.settings.annotationEnabled !== 'undefined') {
+                    this.annotationEnabled = result.settings.annotationEnabled;
+                    document.getElementById('annotationToggle').checked = this.annotationEnabled;
+                }
             }
         } catch (error) {
             console.error('加载设置失败:', error);
         }
     }
 
-    async saveDisplayMode(mode) {
+    async saveAnnotationSetting(enabled) {
         try {
             const result = await chrome.storage.sync.get('settings');
             const settings = result.settings || {};
-            settings.displayMode = mode;
+            settings.annotationEnabled = enabled;
             await chrome.storage.sync.set({ settings });
         } catch (error) {
-            console.error('保存显示模式失败:', error);
+            console.error('保存标注设置失败:', error);
         }
     }
 
     refreshAll() {
         this.accessibilityResults = null;
-        document.getElementById('accessibility-results').innerHTML = '<div class="no-results">点击上方按钮开始检测</div>';
+        const container = document.getElementById('accessibility-results');
+        if (container) {
+            container.innerHTML = '<div class="no-results">点击上方按钮开始检测</div>';
+        }
+        
+        // 隐藏统计区域
+        document.getElementById('statsSection').style.display = 'none';
+        document.getElementById('filterSection').style.display = 'none';
+        
         this.clearAnnotations();
     }
 }

@@ -8,64 +8,181 @@
   </head>
   <body>
     <div class="popup-container">
+      <!-- 现代化头部 -->
       <header class="popup-header">
-        <h1>无障碍检测</h1>
-        <div class="header-actions">
-          <button id="settingsBtn" class="icon-btn" title="设置">⚙️</button>
-          <button id="refreshBtn" class="icon-btn" title="刷新">🔄</button>
+        <div class="header-content">
+          <div class="logo-section">
+            <div class="logo-icon">🔍</div>
+            <h1>无障碍检测</h1>
+          </div>
+          <div class="header-actions">
+            <button id="settingsBtn" class="icon-btn" title="设置">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path
+                  d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66Z"
+                />
+              </svg>
+            </button>
+            <button id="refreshBtn" class="icon-btn" title="刷新">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path
+                  d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35Z"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
       </header>
 
       <main class="popup-main">
+        <!-- 扫描控制区域 -->
         <div class="scan-section">
           <button id="accessibilityScanBtn" class="scan-btn primary">
+            <svg
+              class="scan-icon"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path
+                d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+              />
+            </svg>
             开始无障碍检测
           </button>
         </div>
 
-        <div class="annotation-controls">
-          <div class="control-group">
-            <label class="toggle-label">
-              <input type="checkbox" id="annotationToggle" checked>
-              <span class="toggle-slider"></span>
-              页面标注
-            </label>
+        <!-- 控制面板 -->
+        <div class="controls-panel">
+          <div class="control-row">
+            <div class="control-group">
+              <label class="control-label">页面标注</label>
+              <label class="toggle-switch">
+                <input type="checkbox" id="annotationToggle" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
           </div>
-          <div class="control-group">
-            <label>显示模式：</label>
-            <select id="displayModeSelect">
-              <option value="popup">弹窗显示</option>
-              <option value="console">控制台输出</option>
-              <option value="visual">页面标注</option>
-            </select>
+        </div>
+                <div class="control-row">
+                    <label class="control-label">页面标注</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="annotationToggle" checked>
+                        <span class="slider"></span>
+                    </div>
+                </div>
+            </div>
           </div>
         </div>
 
-        <div class="results-section">
-          <div class="results-header">
-            <span id="resultsCount">点击上方按钮开始检测</span>
-            <div class="filter-controls">
-              <button class="filter-btn active" data-filter="all">全部</button>
-              <button class="filter-btn" data-filter="error">错误</button>
-              <button class="filter-btn" data-filter="warning">警告</button>
+        <!-- 结果统计 -->
+        <div class="stats-section" id="statsSection" style="display: none">
+          <div class="stats-grid">
+            <div class="stat-card error">
+              <div class="stat-icon">❌</div>
+              <div class="stat-content">
+                <div class="stat-number" id="errorCount">0</div>
+                <div class="stat-label">错误</div>
+              </div>
+            </div>
+            <div class="stat-card warning">
+              <div class="stat-icon">⚠️</div>
+              <div class="stat-content">
+                <div class="stat-number" id="warningCount">0</div>
+                <div class="stat-label">警告</div>
+              </div>
+            </div>
+            <div class="stat-card total">
+              <div class="stat-icon">📊</div>
+              <div class="stat-content">
+                <div class="stat-number" id="totalCount">0</div>
+                <div class="stat-label">总计</div>
+              </div>
             </div>
           </div>
+        </div>
+
+        <!-- 过滤器 -->
+        <div class="filter-section" id="filterSection" style="display: none">
+          <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">
+              <span class="tab-text">全部</span>
+              <span class="tab-badge" id="allBadge">0</span>
+            </button>
+            <button class="filter-tab" data-filter="error">
+              <span class="tab-text">错误</span>
+              <span class="tab-badge error" id="errorBadge">0</span>
+            </button>
+            <button class="filter-tab" data-filter="warning">
+              <span class="tab-text">警告</span>
+              <span class="tab-badge warning" id="warningBadge">0</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 结果列表 -->
+        <div class="results-section">
           <div id="accessibility-results" class="results-container">
-            <div class="no-results">点击上方按钮开始检测</div>
+            <div class="empty-state">
+              <div class="empty-icon">🔍</div>
+              <div class="empty-title">准备开始检测</div>
+              <div class="empty-description">点击上方按钮开始无障碍检测</div>
+            </div>
           </div>
         </div>
       </main>
 
+      <!-- 底部操作栏 -->
       <footer class="popup-footer">
-        <button id="exportBtn" class="btn secondary">导出报告</button>
-        <button id="clearBtn" class="btn secondary">清除标注</button>
-        <button id="locateBtn" class="btn primary">定位问题</button>
+        <button id="exportBtn" class="footer-btn secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"
+            />
+          </svg>
+          导出报告
+        </button>
+        <button id="clearBtn" class="footer-btn secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"
+            />
+          </svg>
+          清除标注
+        </button>
+        <button id="locateBtn" class="footer-btn primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M3.05,13H1V11H3.05C3.5,6.83 6.83,3.5 11,3.05V1H13V3.05C17.17,3.5 20.5,6.83 20.95,11H23V13H20.95C20.5,17.17 17.17,20.5 13,20.95V23H11V20.95C6.83,20.5 3.5,17.17 3.05,13M12,5A7,7 0 0,0 5,12A7,7 0 0,0 12,19A7,7 0 0,0 19,12A7,7 0 0,0 12,5Z"
+            />
+          </svg>
+          定位问题
+        </button>
       </footer>
     </div>
 
-    <div id="loading" class="loading hidden">
-      <div class="spinner"></div>
-      <span>检测中...</span>
+    <!-- 加载状态 -->
+    <div id="loading" class="loading-overlay hidden">
+      <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">正在检测中...</div>
+        <div class="loading-progress">
+          <div class="progress-bar">
+            <div class="progress-fill"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script src="../lib/utils.js"></script>
