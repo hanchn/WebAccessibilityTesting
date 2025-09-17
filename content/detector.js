@@ -135,7 +135,7 @@ class AccessibilityDetector {
             const fontSize = parseFloat(style.fontSize);
             
             // 简化的对比度检查
-            if (this.hasLowContrast(textColor, bgColor, fontSize)) {
+            if (this.hasLowContrast(element, textColor, bgColor, fontSize)) {
                 this.issues.push({
                     id: `contrast-${index}`,
                     element: element,
@@ -177,34 +177,78 @@ class AccessibilityDetector {
         });
     }
 
-    hasLowContrast(textColor, bgColor, fontSize) {
-        // 简化的对比度检查逻辑
-        if (!textColor || !bgColor) return false;
+    hasLowContrast(element, textColor, bgColor, fontSize) {
+        // 添加更严格的参数检查
+        if (!element || !element.isConnected || !textColor || !bgColor) return false;
         if (bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent') return false;
         
-        // 解析颜色值
-        const textRgb = this.parseColor(textColor);
-        const bgRgb = this.parseColor(bgColor);
-        
-        if (!textRgb || !bgRgb) return false;
-        
-        // 计算对比度
-        const contrast = this.calculateContrast(textRgb, bgRgb);
-        
-        // WCAG标准：大文字(18pt+或14pt+粗体)需要3:1，普通文字需要4.5:1
-        const isLargeText = fontSize >= 18 || (fontSize >= 14 && this.isBold(textColor));
-        const requiredContrast = isLargeText ? 3 : 4.5;
-        
-        return contrast < requiredContrast;
+        try {
+            // 解析颜色值
+            const textRgb = this.parseColor(textColor);
+            const bgRgb = this.parseColor(bgColor);
+            
+            if (!textRgb || !bgRgb) {
+                console.warn('无法解析颜色值:', { textColor, bgColor });
+                return false;
+            }
+            
+            // 计算对比度
+            const contrast = this.calculateContrast(textRgb, bgRgb);
+            
+            // WCAG标准：大文字(18pt+或14pt+粗体)需要3:1，普通文字需要4.5:1
+            // 修复：确保传入element而不是textColor
+            const isLargeText = fontSize >= 18 || (fontSize >= 14 && this.isBold(element));
+            const requiredContrast = isLargeText ? 3 : 4.5;
+            
+            return contrast < requiredContrast;
+        } catch (error) {
+            console.warn('对比度检查失败:', error);
+            return false;
+        }
     }
 
     parseColor(color) {
-        // 简化的颜色解析
-        const rgb = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+        if (!color || color === 'transparent') return null;
+        
+        // 处理 rgb() 格式
+        let rgb = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
         if (rgb) {
             return [parseInt(rgb[1]), parseInt(rgb[2]), parseInt(rgb[3])];
         }
-        return null;
+        
+        // 处理 rgba() 格式
+        rgb = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d.]+\)/);
+        if (rgb) {
+            return [parseInt(rgb[1]), parseInt(rgb[2]), parseInt(rgb[3])];
+        }
+        
+        // 处理十六进制格式
+        rgb = color.match(/^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+        if (rgb) {
+            return [parseInt(rgb[1], 16), parseInt(rgb[2], 16), parseInt(rgb[3], 16)];
+        }
+        
+        // 处理简写十六进制格式
+        rgb = color.match(/^#([a-f\d])([a-f\d])([a-f\d])$/i);
+        if (rgb) {
+            return [parseInt(rgb[1] + rgb[1], 16), parseInt(rgb[2] + rgb[2], 16), parseInt(rgb[3] + rgb[3], 16)];
+        }
+        
+        // 处理常见颜色名称
+        const colorMap = {
+            'black': [0, 0, 0],
+            'white': [255, 255, 255],
+            'red': [255, 0, 0],
+            'green': [0, 128, 0],
+            'blue': [0, 0, 255],
+            'yellow': [255, 255, 0],
+            'cyan': [0, 255, 255],
+            'magenta': [255, 0, 255],
+            'gray': [128, 128, 128],
+            'grey': [128, 128, 128]
+        };
+        
+        return colorMap[color.toLowerCase()] || null;
     }
 
     calculateContrast(rgb1, rgb2) {
@@ -230,8 +274,19 @@ class AccessibilityDetector {
     }
 
     isBold(element) {
-        const style = window.getComputedStyle(element);
-        const fontWeight = style.fontWeight;
-        return fontWeight === 'bold' || parseInt(fontWeight) >= 600;
+        // 添加参数验证
+        if (!element || !(element instanceof Element)) {
+            console.warn('isBold: 参数不是有效的Element对象', element);
+            return false;
+        }
+        
+        try {
+            const style = window.getComputedStyle(element);
+            const fontWeight = style.fontWeight;
+            return fontWeight === 'bold' || parseInt(fontWeight) >= 600;
+        } catch (error) {
+            console.warn('获取元素样式失败:', error);
+            return false;
+        }
     }
 }
