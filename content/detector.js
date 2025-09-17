@@ -178,8 +178,18 @@ class AccessibilityDetector {
     }
 
     hasLowContrast(element, textColor, bgColor, fontSize) {
-        // 添加更严格的参数检查
-        if (!element || !element.isConnected || !textColor || !bgColor) return false;
+        // 添加调试信息
+        console.log('hasLowContrast called with:', {
+            element: element,
+            elementType: typeof element,
+            isElement: element instanceof Element,
+            textColor,
+            bgColor,
+            fontSize
+        });
+        
+        // 简化的对比度检查逻辑
+        if (!textColor || !bgColor) return false;
         if (bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent') return false;
         
         try {
@@ -202,7 +212,7 @@ class AccessibilityDetector {
             
             return contrast < requiredContrast;
         } catch (error) {
-            console.warn('对比度检查失败:', error);
+            console.error('hasLowContrast error:', error);
             return false;
         }
     }
@@ -274,9 +284,24 @@ class AccessibilityDetector {
     }
 
     isBold(element) {
-        // 添加参数验证
-        if (!element || !(element instanceof Element)) {
-            console.warn('isBold: 参数不是有效的Element对象', element);
+        // 更强的参数验证
+        if (!element) {
+            console.warn('isBold: element is null or undefined');
+            return false;
+        }
+        
+        if (typeof element !== 'object') {
+            console.warn('isBold: element is not an object, type:', typeof element, 'value:', element);
+            return false;
+        }
+        
+        if (!(element instanceof Element)) {
+            console.warn('isBold: element is not an Element instance:', element);
+            return false;
+        }
+        
+        if (!element.isConnected) {
+            console.warn('isBold: element is not connected to DOM');
             return false;
         }
         
@@ -285,7 +310,7 @@ class AccessibilityDetector {
             const fontWeight = style.fontWeight;
             return fontWeight === 'bold' || parseInt(fontWeight) >= 600;
         } catch (error) {
-            console.warn('获取元素样式失败:', error);
+            console.warn('获取元素样式失败:', error, 'element:', element);
             return false;
         }
     }
