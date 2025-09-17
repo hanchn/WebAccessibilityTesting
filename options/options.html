@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Accessibility & SEO Tester - 设置</title>
+    <link rel="stylesheet" href="options.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Web Accessibility & SEO Tester</h1>
+            <p>配置您的检测偏好设置</p>
+        </header>
+
+        <main>
+            <section class="settings-section">
+                <h2>显示设置</h2>
+                <div class="setting-item">
+                    <label for="displayMode">默认显示模式：</label>
+                    <select id="displayMode">
+                        <option value="popup">弹窗模式</option>
+                        <option value="console">控制台输出</option>
+                        <option value="visual">页面标注</option>
+                    </select>
+                </div>
+                
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="autoScan"> 页面加载时自动扫描
+                    </label>
+                </div>
+            </section>
+
+            <section class="settings-section">
+                <h2>检测设置</h2>
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="enableSEO" checked> 启用SEO检测
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="enableAccessibility" checked> 启用无障碍检测
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="severityLevel">最低严重级别：</label>
+                    <select id="severityLevel">
+                        <option value="low">低</option>
+                        <option value="medium" selected>中</option>
+                        <option value="high">高</option>
+                    </select>
+                </div>
+            </section>
+
+            <section class="settings-section">
+                <h2>报告设置</h2>
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="includeScreenshots"> 报告中包含截图
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="reportFormat">报告格式：</label>
+                    <select id="reportFormat">
+                        <option value="html" selected>HTML</option>
+                        <option value="json">JSON</option>
+                        <option value="csv">CSV</option>
+                    </select>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <button id="saveBtn" class="btn btn-primary">保存设置</button>
+            <button id="resetBtn" class="btn btn-secondary">重置默认</button>
+            <div id="status" class="status-message"></div>
+        </footer>
+    </div>
+
+    <script src="options.js"></script>
+</body>
+</html>
