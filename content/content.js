@@ -47,6 +47,16 @@ class ContentScript {
                     sendResponse(accessibilityResults);
                     break;
                     
+                case 'toggleAnnotation':
+                    this.displayManager.visualAnnotator.setEnabled(request.enabled);
+                    sendResponse({ success: true });
+                    break;
+                    
+                case 'locateElement':
+                    this.locateElementById(request.issueId);
+                    sendResponse({ success: true });
+                    break;
+                    
                 case 'setDisplayMode':
                     this.settings.displayMode = request.mode;
                     this.displayManager.setMode(request.mode);
@@ -74,6 +84,18 @@ class ContentScript {
         } catch (error) {
             console.error('处理消息时出错:', error);
             sendResponse({ error: error.message });
+        }
+    }
+
+    locateElementById(issueId) {
+        const annotation = this.displayManager.visualAnnotator.annotations.get(issueId);
+        if (annotation && annotation.element) {
+            this.displayManager.visualAnnotator.highlightElement(annotation.element);
+            // 显示对应的提示框
+            if (annotation.tooltip) {
+                annotation.tooltip.style.display = 'block';
+                annotation.tooltip.classList.add('expanded');
+            }
         }
     }
 

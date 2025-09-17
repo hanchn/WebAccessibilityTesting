@@ -23,16 +23,33 @@
           </button>
         </div>
 
-        <div class="display-mode-section">
-          <label>显示模式：</label>
-          <select id="displayModeSelect">
-            <option value="popup">弹窗显示</option>
-            <option value="console">控制台输出</option>
-            <option value="visual">页面标注</option>
-          </select>
+        <div class="annotation-controls">
+          <div class="control-group">
+            <label class="toggle-label">
+              <input type="checkbox" id="annotationToggle" checked>
+              <span class="toggle-slider"></span>
+              页面标注
+            </label>
+          </div>
+          <div class="control-group">
+            <label>显示模式：</label>
+            <select id="displayModeSelect">
+              <option value="popup">弹窗显示</option>
+              <option value="console">控制台输出</option>
+              <option value="visual">页面标注</option>
+            </select>
+          </div>
         </div>
 
         <div class="results-section">
+          <div class="results-header">
+            <span id="resultsCount">点击上方按钮开始检测</span>
+            <div class="filter-controls">
+              <button class="filter-btn active" data-filter="all">全部</button>
+              <button class="filter-btn" data-filter="error">错误</button>
+              <button class="filter-btn" data-filter="warning">警告</button>
+            </div>
+          </div>
           <div id="accessibility-results" class="results-container">
             <div class="no-results">点击上方按钮开始检测</div>
           </div>
@@ -42,6 +59,7 @@
       <footer class="popup-footer">
         <button id="exportBtn" class="btn secondary">导出报告</button>
         <button id="clearBtn" class="btn secondary">清除标注</button>
+        <button id="locateBtn" class="btn primary">定位问题</button>
       </footer>
     </div>
 
@@ -50,6 +68,7 @@
       <span>检测中...</span>
     </div>
 
+    <script src="../lib/utils.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

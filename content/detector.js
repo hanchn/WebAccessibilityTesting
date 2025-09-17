@@ -79,54 +79,53 @@ class WebDetector {
             
             const startTime = Date.now();
             const issues = [];
-    
-            try {
-                // 无障碍检测项目
-                const checks = [
-                    () => this.accessibilityChecker.checkImages(),
-                    () => this.accessibilityChecker.checkForms(),
-                    () => this.accessibilityChecker.checkHeadings(),
-                    () => this.accessibilityChecker.checkLinks(),
-                    () => this.accessibilityChecker.checkARIA(),
-                    () => this.accessibilityChecker.checkColorContrast(),
-                    () => this.accessibilityChecker.checkKeyboardNavigation(),
-                    () => this.accessibilityChecker.checkFocus()
-                ];
-    
-                for (const check of checks) {
-                    try {
-                        const result = await check();
-                        if (result && result.length > 0) {
-                            issues.push(...result);
-                        }
-                    } catch (error) {
-                        console.error('无障碍检测项目失败:', error);
+            const checkedElements = new Set(); // 添加已检查元素集合
+            const issueMap = new Map(); // 用于去重的问题映射
+            
+            // 收集所有检测结果
+            const allChecks = [
+                () => this.accessibilityChecker.checkImages(),
+                () => this.accessibilityChecker.checkHeadings(),
+                () => this.accessibilityChecker.checkLinks(),
+                () => this.accessibilityChecker.checkForms(),
+                () => this.accessibilityChecker.checkColors(),
+                () => this.accessibilityChecker.checkKeyboard(),
+                () => this.accessibilityChecker.checkARIA(),
+                () => this.accessibilityChecker.checkTables()
+            ];
+            
+            allChecks.forEach(checkFn => {
+                const checkResults = checkFn();
+                checkResults.forEach(issue => {
+                    // 为每个问题生成唯一标识符
+                    const elementKey = issue.element ? 
+                        `${issue.element.tagName}-${issue.element.className}-${issue.element.id || 'no-id'}` : 
+                        issue.selector || 'no-element';
+                    const issueKey = `${elementKey}-${issue.title}-${issue.category}`;
+                    
+                    // 去重：如果同一个元素的同一类问题已存在，则跳过
+                    if (!issueMap.has(issueKey)) {
+                        issueMap.set(issueKey, issue);
+                        issues.push({
+                            ...issue,
+                            id: issueKey, // 添加唯一ID
+                            timestamp: Date.now()
+                        });
                     }
-                }
-    
-            } catch (error) {
-                console.error('无障碍检测失败:', error);
-                issues.push({
-                    title: '无障碍检测错误',
-                    description: '检测过程中发生错误: ' + error.message,
-                    severity: 'error',
-                    category: 'system'
                 });
-            }
-    
-            const endTime = Date.now();
+            });
             
             return {
                 type: 'accessibility',
+                url: window.location.href,
+                timestamp: new Date().toISOString(),
                 issues: issues,
                 summary: {
                     total: issues.length,
-                    errors: issues.filter(i => i.severity === 'error').length,
-                    warnings: issues.filter(i => i.severity === 'warning').length,
-                    duration: endTime - startTime
-                },
-                timestamp: new Date().toISOString(),
-                url: window.location.href
+                    errors: issues.filter(issue => issue.severity === 'error').length,
+                    warnings: issues.filter(issue => issue.severity === 'warning').length,
+                    duration: Date.now() - startTime
+                }
             };
         }
     }

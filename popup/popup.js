@@ -12,79 +12,153 @@ class PopupController {
     }
 
     bindEvents() {
-        // 检测按钮
+        // 扫描按钮
         document.getElementById('accessibilityScanBtn').addEventListener('click', () => {
             this.startAccessibilityScan();
         });
-
+    
+        // 标注开关
+        document.getElementById('annotationToggle').addEventListener('change', (e) => {
+            this.toggleAnnotation(e.target.checked);
+        });
+    
         // 显示模式选择
         document.getElementById('displayModeSelect').addEventListener('change', (e) => {
             this.setDisplayMode(e.target.value);
         });
-
-        // 其他按钮
+    
+        // 过滤按钮
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.filterResults(e.target.dataset.filter);
+            });
+        });
+    
+        // 定位问题按钮
+        document.getElementById('locateBtn').addEventListener('click', () => {
+            this.locateIssues();
+        });
+    
+        // 其他按钮事件
+        document.getElementById('exportBtn').addEventListener('click', () => this.exportReport());
+        document.getElementById('clearBtn').addEventListener('click', () => this.clearAnnotations());
+        document.getElementById('refreshBtn').addEventListener('click', () => this.refreshAll());
         document.getElementById('settingsBtn').addEventListener('click', () => {
             chrome.runtime.openOptionsPage();
         });
+    }
 
-        document.getElementById('exportBtn').addEventListener('click', () => {
-            this.exportReport();
+    async toggleAnnotation(enabled) {
+        try {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            await chrome.tabs.sendMessage(tab.id, {
+                action: 'toggleAnnotation',
+                enabled: enabled
+            });
+        } catch (error) {
+            console.error('切换标注失败:', error);
+        }
+    }
+
+    filterResults(filter) {
+        // 更新过滤按钮状态
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.filter === filter);
         });
-
-        document.getElementById('refreshBtn').addEventListener('click', () => {
-            this.refreshAll();
-        });
-
-        document.getElementById('clearBtn').addEventListener('click', () => {
-            this.clearAnnotations();
+        
+        // 过滤结果显示
+        const items = document.querySelectorAll('.result-item');
+        items.forEach(item => {
+            if (filter === 'all' || item.classList.contains(filter)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
         });
     }
 
-    async startAccessibilityScan() {
-        this.showLoading(true);
+    async locateIssues() {
+        if (!this.accessibilityResults || this.accessibilityResults.issues.length === 0) {
+            alert('请先进行检测');
+            return;
+        }
         
         try {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            
-            const results = await chrome.tabs.sendMessage(tab.id, {
-                action: 'startAccessibilityScan'
+            await chrome.tabs.sendMessage(tab.id, {
+                action: 'setDisplayMode',
+                mode: 'visual'
             });
             
-            this.accessibilityResults = results;
-            this.displayAccessibilityResults(results);
+            // 切换到页面标注模式
+            document.getElementById('displayModeSelect').value = 'visual';
+            document.getElementById('annotationToggle').checked = true;
             
+            alert('已切换到页面标注模式，请查看页面上的红色标注');
         } catch (error) {
-            console.error('无障碍扫描失败:', error);
-            this.showError('无障碍检测失败，请刷新页面后重试');
-        } finally {
-            this.showLoading(false);
+            console.error('定位问题失败:', error);
         }
     }
 
     displayAccessibilityResults(results) {
         const container = document.getElementById('accessibility-results');
+        const countElement = document.getElementById('resultsCount');
+    
         container.innerHTML = '';
-
+    
         if (results.issues.length === 0) {
             container.innerHTML = '<div class="no-issues">✅ 未发现无障碍问题</div>';
+            countElement.textContent = '未发现问题';
             return;
         }
-
+    
+        // 更新计数显示
+        const errorCount = results.issues.filter(issue => issue.severity === 'error').length;
+        const warningCount = results.issues.filter(issue => issue.severity === 'warning').length;
+        countElement.innerHTML = `共发现 <span class="count-total">${results.issues.length}</span> 个问题 
+            (<span class="count-error">${errorCount}</span> 错误, <span class="count-warning">${warningCount}</span> 警告)`;
+    
         results.issues.forEach(issue => {
-            const item = this.createResultItem(issue);
+            const item = this.createEnhancedResultItem(issue);
             container.appendChild(item);
         });
     }
 
-    createResultItem(issue) {
+    createEnhancedResultItem(issue) {
         const item = document.createElement('div');
         item.className = `result-item ${issue.severity}`;
-        
+    
         item.innerHTML = `
-            <div class="issue-title">${issue.title}</div>
+            <div class="issue-header">
+                <span class="severity-badge ${issue.severity}">${issue.severity.toUpperCase()}</span>
+                <div class="issue-title">${issue.title}</div>
+            </div>
             <div class="issue-description">${issue.description}</div>
-            <div class="issue-category">${issue.category}</div>
+            <div class="issue-meta">
+                <span class="issue-category">${issue.category}</span>
+                ${issue.element ? '<span class="has-element">🎯 可定位</span>' : ''}
+            </div>
+            ${issue.suggestion ? `<div class="issue-suggestion">💡 ${issue.suggestion}</div>` : ''}
+            <div class="issue-actions">
+                <button class="locate-btn" ${!issue.element ? 'disabled' : ''}>定位元素</button>
+            </div>
         `;
+    
+        // 绑定定位按钮事件
+        const locateBtn = item.querySelector('.locate-btn');
+        if (issue.element && locateBtn) {
+            locateBtn.addEventListener('click', async () => {
+                try {
+                    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                    await chrome.tabs.sendMessage(tab.id, {
+                        action: 'locateElement',
+                        issueId: issue.id
+                    });
+                } catch (error) {
+                    console.error('定位元素失败:', error);
+                }
+            });
+        }
         
         return item;
     }
