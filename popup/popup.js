@@ -44,16 +44,16 @@ class PopupController {
                     
                     if (response && response.success) {
                         console.log(`📊 检测完成，发现 ${response.results.length} 个问题`);
-                        
-                        // 默认开启标注
-                        const annotationToggle = document.getElementById('annotationToggle');
-                        if (annotationToggle) {
-                            annotationToggle.checked = true;
-                            await this.toggleAnnotation(true);
-                        }
                     } else {
                         console.log('✅ 检测完成，未发现问题');
                     }
+                    
+                    // 由于开关默认选中，自动开启标注
+                    const annotationToggle = document.getElementById('annotationToggle');
+                    if (annotationToggle && annotationToggle.checked) {
+                        await this.toggleAnnotation(true);
+                    }
+                    
                 } catch (error) {
                     console.error('❌ 自动检测失败:', error);
                 } finally {
